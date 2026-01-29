@@ -130,9 +130,11 @@ export default function ChecklistPage() {
   };
 
   const resetAll = () => {
-    setData(initialData);
-    setExpandedTips({});
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (confirm("모든 내용을 초기화할까요?")) {
+      setData(initialData);
+      setExpandedTips({});
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const scrollToSection = (key: string) => {
@@ -160,8 +162,7 @@ export default function ChecklistPage() {
 
   // 요약 생성
   const generateSummary = () => {
-    let summary = "📋 고객 상담 내용 정리\n";
-    summary += "━━━━━━━━━━━━━━━━━━━━━\n\n";
+    let summary = "📋 고객 상담 내용 정리\n━━━━━━━━━━━━━━━━━━━━━\n\n";
     
     if (data.siteType || data.customSiteType) {
       const typeLabel = data.customSiteType || 
@@ -219,106 +220,87 @@ export default function ChecklistPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // 상황별 대응 팁 컴포넌트 - 버그 수정
   const SituationTip = ({ 
     id, 
     situation, 
     response, 
-    color = "#6366f1",
+    color = "#4f46e5",
     icon: IconComponent = Lightbulb 
-  }: { 
-    id: string;
-    situation: string; 
-    response: string[];
-    color?: string;
-    icon?: React.ElementType;
-  }) => {
+  }: any) => {
     const isExpanded = expandedTips[id] || false;
     
     return (
-      <div className="border border-[#2a2a32] rounded-xl overflow-hidden">
+      <div className="border border-gray-100 rounded-xl overflow-hidden bg-white shadow-sm mb-2">
         <button
           type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleTip(id);
-          }}
-          className="w-full p-3 flex items-center gap-3 text-left hover:bg-[#27272a]/50 transition-colors"
+          onClick={() => toggleTip(id)}
+          className="w-full p-4 flex items-center gap-3 text-left hover:bg-gray-50 transition-all"
         >
           <div 
             className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: `${color}20` }}
+            style={{ backgroundColor: `${color}15` }}
           >
             <IconComponent className="w-4 h-4" style={{ color }} />
           </div>
-          <span className="flex-1 text-sm text-[#e8e8ed]">{situation}</span>
+          <span className="flex-1 text-sm font-black text-gray-700">{situation}</span>
           <ChevronDown 
-            className={`w-4 h-4 text-[#71717a] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} 
+            className={`w-4 h-4 text-gray-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
           />
         </button>
-        <div 
-          className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
-        >
-          <div className="px-4 pb-4 pt-1">
-            <div className="bg-[#1a1a1f] rounded-lg p-3 border-l-2" style={{ borderColor: color }}>
+        {isExpanded && (
+          <div className="px-4 pb-4 pt-1 animate-fade-in-up">
+            <div className="bg-gray-50 rounded-xl p-4 border-l-4" style={{ borderColor: color }}>
               <ul className="space-y-2">
-                {response.map((r, i) => (
-                  <li key={i} className="text-sm text-[#a1a1aa] flex items-start gap-2">
-                    <span className="text-[#71717a]">→</span>
+                {response.map((r: any, i: number) => (
+                  <li key={i} className="text-sm text-gray-600 font-bold leading-relaxed flex items-start gap-2">
+                    <span className="text-gray-300 mt-1">●</span>
                     <span>{r}</span>
                   </li>
                 ))}
               </ul>
             </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
 
   return (
-    <div className="flex gap-6 max-w-6xl mx-auto">
+    <div className="flex gap-6 max-w-6xl mx-auto py-4">
       {/* 왼쪽: 스크롤되는 스크립트 영역 */}
-      <div className="flex-1 space-y-6 pb-32">
+      <div className="flex-1 space-y-10 pb-32">
         {/* 헤더 */}
-        <div className="text-center py-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#6366f1] to-[#22d3ee] mb-4">
-            <Phone className="w-8 h-8 text-white" />
+        <div className="text-center py-12 bg-white rounded-[32px] border border-gray-100 shadow-sm">
+          <div className="w-20 h-20 rounded-3xl bg-indigo-600 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-100">
+            <Phone className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">영업 상담 스크립트</h1>
-          <p className="text-[#71717a]">스크롤하면서 상담하고, 오른쪽에 메모하세요</p>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">영업 상담 가이드</h1>
+          <p className="text-gray-500 font-medium">고객의 니즈를 정확히 파악하고 신뢰를 확보하세요.</p>
         </div>
 
         {/* 핵심 원칙 배너 */}
-        <div className="card p-4 border-l-4 border-[#f59e0b] bg-[#f59e0b]/5">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-[#f59e0b] flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-[#fbbf24] mb-1">💡 핵심 원칙</p>
-              <ul className="text-sm text-[#a1a1aa] space-y-1">
-                <li>• <strong className="text-white">확답 금지</strong> - "정확한 금액은 기획 확정 후 안내드릴게요"</li>
-                <li>• <strong className="text-white">예산 먼저</strong> - 고객 예산을 먼저 파악하면 맞춤 제안 가능</li>
-                <li>• <strong className="text-white">인건비 개념</strong> - 개발은 전문가 인건비, 양에 따라 비용이 달라짐</li>
-              </ul>
-            </div>
+        <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100 flex items-start gap-4">
+          <AlertTriangle className="w-6 h-6 text-amber-600 mt-1" />
+          <div>
+            <h3 className="font-black text-amber-900 mb-1">핵심 유의사항</h3>
+            <ul className="text-sm font-bold text-amber-800/70 space-y-1">
+              <li>• 견적 확답 금지 (기획 확정 후 안내)</li>
+              <li>• 고객 예산 먼저 파악</li>
+              <li>• 제작 범위에 따른 인건비 개념 설명</li>
+            </ul>
           </div>
         </div>
 
         {/* ========== STEP 0: 첫 응대 ========== */}
         <section ref={sectionRefs.start} id="start" className="scroll-mt-8">
-          <div className="card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-3xl">📞</span>
-              <div>
-                <h2 className="text-xl font-bold">전화 받자마자</h2>
-                <p className="text-sm text-[#71717a]">첫 인상이 중요해요</p>
-              </div>
-            </div>
+          <div className="card p-8">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+              <span className="text-3xl">📞</span> 첫 인사 및 응대
+            </h2>
             
-            <div className="bg-[#6366f1]/10 border border-[#6366f1]/30 rounded-xl p-4 mb-4">
-              <p className="text-sm text-[#a5b4fc] mb-1">💬 기본 인사</p>
-              <p className="text-[#e8e8ed]">"안녕하세요! 홈페이지 제작 상담 도와드릴게요. 편하게 말씀해 주세요 😊"</p>
+            <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 mb-6">
+              <p className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-2">기본 멘트</p>
+              <p className="text-indigo-900 font-black text-lg">"안녕하세요! 무엇을 도와드릴까요? 제작하시려는 사이트에 대해 몇 가지만 여쭤봐도 될까요?"</p>
             </div>
 
             <div className="space-y-2">
@@ -350,23 +332,16 @@ export default function ChecklistPage() {
 
         {/* ========== STEP 1: 사이트 유형 ========== */}
         <section ref={sectionRefs.sitetype} id="sitetype" className="scroll-mt-8">
-          <div className="card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-[#10b981]/20 flex items-center justify-center">
-                <Target className="w-5 h-5 text-[#10b981]" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">어떤 사이트를 만들고 싶으세요?</h2>
-                <p className="text-sm text-[#71717a]">유형 파악이 첫 번째!</p>
-              </div>
-            </div>
+          <div className="card p-8">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+              <Target className="w-7 h-7 text-indigo-600" /> 사이트 유형 파악
+            </h2>
             
-            <div className="bg-[#10b981]/10 border border-[#10b981]/30 rounded-xl p-4 mb-5">
-              <p className="text-sm text-[#6ee7b7] mb-1">💬 이렇게 물어보세요</p>
-              <p className="text-[#e8e8ed]">"어떤 사이트를 만들고 싶으세요? 회사 소개용인지, 쇼핑몰인지, 예약 사이트인지요?"</p>
+            <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 mb-6">
+              <p className="text-indigo-900 font-black text-lg">"어떤 사이트를 만들고 싶으세요? 회사 소개용인지, 쇼핑몰인지, 예약 사이트인지요?"</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mb-4">
+            <div className="grid grid-cols-2 gap-3 mb-6">
               {[
                 { id: "company", label: "회사/브랜드 소개", icon: Building2 },
                 { id: "shopping", label: "쇼핑몰", icon: ShoppingCart },
@@ -381,14 +356,14 @@ export default function ChecklistPage() {
                   <button
                     key={option.id}
                     onClick={() => updateData({ siteType: option.id })}
-                    className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3
+                    className={`p-5 rounded-2xl border-2 transition-all text-left flex items-center gap-4
                       ${isSelected 
-                        ? "bg-[#10b981]/10 border-[#10b981]" 
-                        : "bg-[#27272a]/30 border-[#2a2a32] hover:border-[#3a3a42]"
+                        ? "bg-indigo-50 border-indigo-600 shadow-md shadow-indigo-100" 
+                        : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                   >
-                    <Icon className={`w-5 h-5 ${isSelected ? "text-[#10b981]" : "text-[#71717a]"}`} />
-                    <span className={`text-sm ${isSelected ? "text-white font-medium" : "text-[#a1a1aa]"}`}>
+                    <Icon className={`w-6 h-6 ${isSelected ? "text-indigo-600" : "text-gray-400"}`} />
+                    <span className={`text-lg font-black ${isSelected ? "text-indigo-900" : "text-gray-600"}`}>
                       {option.label}
                     </span>
                   </button>
@@ -396,22 +371,19 @@ export default function ChecklistPage() {
               })}
             </div>
 
-            <div className="flex items-center gap-2 mb-4">
-              <PlusCircle className="w-4 h-4 text-[#71717a]" />
-              <input
-                type="text"
-                value={data.customSiteType}
-                onChange={(e) => updateData({ customSiteType: e.target.value, siteType: "" })}
-                placeholder="기타 유형 직접 입력..."
-                className="input-field flex-1 text-sm py-2"
-              />
-            </div>
+            <input
+              type="text"
+              value={data.customSiteType}
+              onChange={(e) => updateData({ customSiteType: e.target.value, siteType: "" })}
+              placeholder="기타 유형을 직접 입력하세요..."
+              className="input-field h-14 font-black text-lg mb-6"
+            />
 
             <SituationTip
               id="vague-site"
               situation="🤷 '그냥 홈페이지요' 라고 애매하게 답할 때"
               icon={HelpCircle}
-              color="#6366f1"
+              color="#4f46e5"
               response={[
                 '"혹시 거기서 물건을 파시거나, 예약을 받으실 건가요?"',
                 '"아니면 회사나 서비스를 소개하는 용도인가요?"'
@@ -422,43 +394,36 @@ export default function ChecklistPage() {
 
         {/* ========== STEP 2: 기획 상태 ========== */}
         <section ref={sectionRefs.plan} id="plan" className="scroll-mt-8">
-          <div className="card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-[#f59e0b]/20 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-[#f59e0b]" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">기획이 되어 있으신가요?</h2>
-                <p className="text-sm text-[#71717a]">메뉴 구조 파악</p>
-              </div>
-            </div>
+          <div className="card p-8">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+              <FileText className="w-7 h-7 text-indigo-600" /> 기획 상태 확인
+            </h2>
             
-            <div className="bg-[#f59e0b]/10 border border-[#f59e0b]/30 rounded-xl p-4 mb-5">
-              <p className="text-sm text-[#fbbf24] mb-1">💬 이렇게 물어보세요</p>
-              <p className="text-[#e8e8ed]">"혹시 기획이 되어 있으신가요? 아니면 기획부터 도움이 필요하신가요?"</p>
+            <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 mb-6">
+              <p className="text-indigo-900 font-black text-lg">"혹시 기획이 되어 있으신가요? 아니면 기획부터 도움이 필요하신가요?"</p>
             </div>
 
-            <div className="flex gap-2 mb-4">
+            <div className="grid grid-cols-3 gap-3 mb-6">
               {[
-                { id: "yes", label: "기획 완료", desc: "메뉴/페이지 구조 있음" },
-                { id: "partial", label: "대략적으로", desc: "감은 있는데 정리 안됨" },
-                { id: "no", label: "기획 필요", desc: "뭘 넣어야 할지 모름" },
+                { id: "yes", label: "기획 완료", desc: "상세 기획서 보유" },
+                { id: "partial", label: "부분 기획", desc: "메뉴 구조만 있음" },
+                { id: "no", label: "기획 필요", desc: "아이디어만 있음" },
               ].map((opt) => {
                 const isSelected = data.hasPlan === opt.id;
                 return (
                   <button
                     key={opt.id}
                     onClick={() => updateData({ hasPlan: opt.id })}
-                    className={`flex-1 p-3 rounded-xl border transition-all text-center
+                    className={`p-5 rounded-2xl border-2 transition-all text-center
                       ${isSelected 
-                        ? "bg-[#f59e0b]/10 border-[#f59e0b]" 
-                        : "bg-[#27272a]/30 border-[#2a2a32] hover:border-[#3a3a42]"
+                        ? "bg-indigo-50 border-indigo-600 shadow-md shadow-indigo-100" 
+                        : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                   >
-                    <p className={`text-sm font-medium ${isSelected ? "text-white" : "text-[#a1a1aa]"}`}>
+                    <p className={`text-lg font-black ${isSelected ? "text-indigo-900" : "text-gray-800"}`}>
                       {opt.label}
                     </p>
-                    <p className="text-xs text-[#71717a] mt-1">{opt.desc}</p>
+                    <p className="text-xs font-bold text-gray-400 mt-1">{opt.desc}</p>
                   </button>
                 );
               })}
@@ -466,35 +431,37 @@ export default function ChecklistPage() {
 
             {/* 기획 완료 시 */}
             {data.hasPlan === "yes" && (
-              <div className="bg-[#1a1a1f] rounded-xl p-4 mb-4">
-                <p className="text-sm text-[#6ee7b7] mb-2">✅ 메뉴 구조를 알려달라고 하세요</p>
-                <p className="text-xs text-[#71717a] mb-3">"그러면 메뉴 구조 알려주시겠어요? 예를 들어 홈, 회사소개, 서비스, 문의하기 이런 식으로요"</p>
+              <div className="bg-gray-50 rounded-2xl p-6 mb-6 border border-gray-100">
+                <p className="text-sm font-black text-indigo-600 mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> 확인된 메뉴 구조
+                </p>
                 <textarea
                   value={data.menuStructure}
                   onChange={(e) => updateData({ menuStructure: e.target.value })}
-                  placeholder="고객이 알려준 메뉴 구조 메모..."
-                  className="input-field text-sm min-h-[60px] resize-none"
+                  placeholder="예: 홈, 회사소개, 서비스, 포트폴리오, 문의하기..."
+                  className="input-field min-h-[100px] font-bold text-base bg-white"
                 />
               </div>
             )}
 
             {/* 기획 필요 시 */}
             {(data.hasPlan === "no" || data.hasPlan === "partial") && (
-              <div className="bg-[#1a1a1f] rounded-xl p-4 mb-4">
-                <p className="text-sm text-[#a5b4fc] mb-2">💡 기본 메뉴 구조 안내해주세요</p>
-                <p className="text-xs text-[#71717a] mb-3">"괜찮아요! 보통 {data.siteType === "company" ? "회사소개" : data.siteType || "이런"} 사이트는 이런 메뉴로 구성돼요:"</p>
+              <div className="bg-gray-50 rounded-2xl p-6 mb-6 border border-gray-100">
+                <p className="text-sm font-black text-amber-600 mb-3 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4" /> 추천 메뉴 구조
+                </p>
                 
                 {data.siteType && defaultMenuStructures[data.siteType] && (
-                  <div className="flex flex-wrap gap-2 mb-3">
+                  <div className="flex flex-wrap gap-2 mb-4">
                     {defaultMenuStructures[data.siteType].map((menu, i) => (
-                      <span key={i} className="px-3 py-1 bg-[#27272a] rounded-full text-sm text-[#a1a1aa]">
+                      <span key={i} className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 shadow-sm">
                         {menu}
                       </span>
                     ))}
                   </div>
                 )}
                 
-                <p className="text-xs text-[#71717a]">"이 중에서 필요 없는 거 빼거나, 추가하고 싶은 거 있으세요?"</p>
+                <p className="text-sm font-bold text-gray-400 italic">"이 중에서 필요 없는 거 빼거나, 추가하고 싶은 거 있으세요?"</p>
               </div>
             )}
 
@@ -502,7 +469,7 @@ export default function ChecklistPage() {
               id="no-idea"
               situation="😵 '뭘 넣어야 할지 모르겠어요'"
               icon={HelpCircle}
-              color="#22d3ee"
+              color="#4f46e5"
               response={[
                 '"괜찮아요! 저희가 같이 정리해드릴게요."',
                 '"일단 경쟁사나 비슷한 업종 사이트 보신 적 있으세요? 참고할 만한 사이트 있으면 알려주세요!"'
@@ -513,57 +480,51 @@ export default function ChecklistPage() {
 
         {/* ========== STEP 3: 콘텐츠 ========== */}
         <section ref={sectionRefs.content} id="content" className="scroll-mt-8">
-          <div className="card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-[#ec4899]/20 flex items-center justify-center">
-                <Palette className="w-5 h-5 text-[#ec4899]" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">콘텐츠(내용)는 있으신가요?</h2>
-                <p className="text-sm text-[#71717a]">각 페이지에 들어갈 내용</p>
-              </div>
-            </div>
+          <div className="card p-8">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+              <Palette className="w-7 h-7 text-indigo-600" /> 콘텐츠 준비 상태
+            </h2>
             
-            <div className="bg-[#ec4899]/10 border border-[#ec4899]/30 rounded-xl p-4 mb-5">
-              <p className="text-sm text-[#f472b6] mb-1">💬 이렇게 물어보세요</p>
-              <p className="text-[#e8e8ed]">"각 메뉴에 들어갈 내용은 준비되어 있으신가요? 텍스트나 이미지 같은 거요."</p>
+            <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 mb-6">
+              <p className="text-indigo-900 font-black text-lg">"각 메뉴에 들어갈 내용은 준비되어 있으신가요? 텍스트나 이미지 같은 거요."</p>
             </div>
 
-            <div className="flex gap-2 mb-4">
+            <div className="grid grid-cols-3 gap-3 mb-6">
               {[
-                { id: "yes", label: "있어요", desc: "텍스트/이미지 준비됨" },
-                { id: "partial", label: "일부만", desc: "몇 개는 있음" },
-                { id: "no", label: "없어요", desc: "다 만들어야 함" },
+                { id: "yes", label: "준비 완료", desc: "텍스트/사진 있음" },
+                { id: "partial", label: "일부 보유", desc: "정리 중" },
+                { id: "no", label: "자료 없음", desc: "제작 필요" },
               ].map((opt) => {
                 const isSelected = data.hasContent === opt.id;
                 return (
                   <button
                     key={opt.id}
                     onClick={() => updateData({ hasContent: opt.id })}
-                    className={`flex-1 p-3 rounded-xl border transition-all text-center
+                    className={`p-5 rounded-2xl border-2 transition-all text-center
                       ${isSelected 
-                        ? "bg-[#ec4899]/10 border-[#ec4899]" 
-                        : "bg-[#27272a]/30 border-[#2a2a32] hover:border-[#3a3a42]"
+                        ? "bg-indigo-50 border-indigo-600 shadow-md shadow-indigo-100" 
+                        : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                   >
-                    <p className={`text-sm font-medium ${isSelected ? "text-white" : "text-[#a1a1aa]"}`}>
+                    <p className={`text-lg font-black ${isSelected ? "text-indigo-900" : "text-gray-800"}`}>
                       {opt.label}
                     </p>
-                    <p className="text-xs text-[#71717a] mt-1">{opt.desc}</p>
+                    <p className="text-xs font-bold text-gray-400 mt-1">{opt.desc}</p>
                   </button>
                 );
               })}
             </div>
 
             {(data.hasContent === "no" || data.hasContent === "partial") && (
-              <div className="bg-[#1a1a1f] rounded-xl p-4">
-                <p className="text-sm text-[#f472b6] mb-2">💡 대략적인 내용이라도 파악하세요</p>
-                <p className="text-xs text-[#71717a] mb-3">"그러면 대충 각 페이지에 어떤 내용이 들어갈지 말씀해주실 수 있을까요?"</p>
+              <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                <p className="text-sm font-black text-indigo-600 mb-3 flex items-center gap-2">
+                  <StickyNote className="w-4 h-4" /> 콘텐츠 관련 메모
+                </p>
                 <textarea
                   value={data.contentNotes}
                   onChange={(e) => updateData({ contentNotes: e.target.value })}
-                  placeholder="예: 회사소개 - 연혁, 비전, 팀 소개 / 서비스 - 3가지 서비스 설명..."
-                  className="input-field text-sm min-h-[60px] resize-none"
+                  placeholder="예: 회사소개 - 연혁, 비전 / 서비스 - 3가지 설명 등..."
+                  className="input-field min-h-[100px] font-bold text-base bg-white"
                 />
               </div>
             )}
@@ -572,40 +533,32 @@ export default function ChecklistPage() {
 
         {/* ========== STEP 4: 섹션 개념 설명 ========== */}
         <section ref={sectionRefs.section} id="section" className="scroll-mt-8">
-          <div className="card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-[#6366f1]/20 flex items-center justify-center">
-                <Layers className="w-5 h-5 text-[#6366f1]" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">페이지 & 섹션 개념 설명</h2>
-                <p className="text-sm text-[#71717a]">견적의 핵심! 꼭 설명해주세요</p>
-              </div>
-            </div>
+          <div className="card p-8">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+              <Layers className="w-7 h-7 text-indigo-600" /> 견적 산정 기준 설명
+            </h2>
             
-            {/* 섹션 개념 설명 */}
-            <div className="bg-[#6366f1]/10 border border-[#6366f1]/30 rounded-xl p-4 mb-5">
-              <p className="text-sm text-[#a5b4fc] mb-2">💬 이렇게 설명해주세요</p>
-              <div className="text-[#e8e8ed] text-sm space-y-2">
-                <p>"잠깐 설명드릴게요. 홈페이지 견적은 <strong className="text-white">페이지 수</strong>랑 <strong className="text-white">섹션 수</strong>로 계산돼요."</p>
-                <p>"같은 1페이지라도 섹션이 3개인 거랑 30개인 거랑 작업량이 완전히 다르거든요."</p>
-                <p>"그래서 대략적인 구성만 알면 견적 범위를 말씀드릴 수 있어요!"</p>
+            <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 mb-8">
+              <p className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-3">중요 설명 멘트</p>
+              <div className="text-indigo-900 font-black text-lg space-y-3 leading-relaxed">
+                <p>"홈페이지 견적은 <span className="text-indigo-600 underline underline-offset-4 decoration-2">페이지 수</span>와 <span className="text-indigo-600 underline underline-offset-4 decoration-2">섹션 수</span>로 결정돼요."</p>
+                <p>"같은 1페이지라도 섹션이 3개인 것과 30개인 것은 작업량이 완전히 다르거든요."</p>
+                <p>"대략적인 구성만 정해지면 정확한 견적 범위를 말씀드릴 수 있습니다!"</p>
               </div>
             </div>
 
-            {/* 섹션 샘플 시각화 */}
-            <div className="mb-5">
-              <p className="text-sm text-[#71717a] mb-3">📏 섹션 길이 예시 (참고용)</p>
-              <div className="space-y-2">
+            <div className="mb-10">
+              <p className="text-sm font-black text-gray-400 mb-4 uppercase tracking-widest">📏 섹션 길이 참고 (작업량 기준)</p>
+              <div className="space-y-4">
                 {sectionSamples.map((sample, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-28 text-xs text-[#a1a1aa]">{sample.name}</div>
-                    <div className="flex-1 h-6 bg-[#27272a] rounded-full overflow-hidden">
+                  <div key={i} className="flex items-center gap-4">
+                    <div className="w-32 text-sm font-black text-gray-600">{sample.name}</div>
+                    <div className="flex-1 h-8 bg-gray-100 rounded-xl overflow-hidden">
                       <div 
-                        className="h-full bg-gradient-to-r from-[#6366f1] to-[#22d3ee] rounded-full flex items-center justify-end pr-2"
+                        className="h-full bg-indigo-600 flex items-center justify-end pr-3 transition-all duration-1000"
                         style={{ width: `${Math.min(sample.sections * 5, 100)}%` }}
                       >
-                        <span className="text-xs text-white font-medium">{sample.sections}섹션</span>
+                        <span className="text-xs text-white font-black">{sample.sections}S</span>
                       </div>
                     </div>
                   </div>
@@ -613,105 +566,70 @@ export default function ChecklistPage() {
               </div>
             </div>
 
-            {/* 페이지/섹션 입력 */}
-            <div className="bg-[#1a1a1f] rounded-xl p-4 mb-4">
-              <p className="text-sm text-[#a5b4fc] mb-3">📝 대략적인 규모 입력</p>
-              
-              <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-50 rounded-[24px] p-8 border border-gray-100 mb-8">
+              <div className="grid grid-cols-2 gap-8 mb-8">
                 <div>
-                  <label className="text-xs text-[#71717a] mb-2 block">예상 페이지 수</label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => updateData({ pageCount: Math.max(1, data.pageCount - 1) })}
-                      className="p-2 rounded-lg bg-[#27272a] hover:bg-[#3a3a42]"
-                    >
-                      <Minus className="w-4 h-4 text-[#71717a]" />
-                    </button>
-                    <span className="flex-1 text-center text-xl font-bold text-white">{data.pageCount}</span>
-                    <button
-                      onClick={() => updateData({ pageCount: data.pageCount + 1 })}
-                      className="p-2 rounded-lg bg-[#27272a] hover:bg-[#3a3a42]"
-                    >
-                      <Plus className="w-4 h-4 text-[#71717a]" />
-                    </button>
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 block">Estimated Pages</label>
+                  <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-gray-200 shadow-sm">
+                    <button onClick={() => updateData({ pageCount: Math.max(1, data.pageCount - 1) })} className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-all"><Minus className="w-6 h-6"/></button>
+                    <span className="flex-1 text-center text-3xl font-black text-gray-900">{data.pageCount}</span>
+                    <button onClick={() => updateData({ pageCount: data.pageCount + 1 })} className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-all"><Plus className="w-6 h-6"/></button>
                   </div>
                 </div>
-                
                 <div>
-                  <label className="text-xs text-[#71717a] mb-2 block">예상 총 섹션 수</label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => updateData({ sectionCount: Math.max(1, data.sectionCount - 1) })}
-                      className="p-2 rounded-lg bg-[#27272a] hover:bg-[#3a3a42]"
-                    >
-                      <Minus className="w-4 h-4 text-[#71717a]" />
-                    </button>
-                    <span className="flex-1 text-center text-xl font-bold text-white">{data.sectionCount}</span>
-                    <button
-                      onClick={() => updateData({ sectionCount: data.sectionCount + 1 })}
-                      className="p-2 rounded-lg bg-[#27272a] hover:bg-[#3a3a42]"
-                    >
-                      <Plus className="w-4 h-4 text-[#71717a]" />
-                    </button>
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 block">Total Sections</label>
+                  <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-gray-200 shadow-sm">
+                    <button onClick={() => updateData({ sectionCount: Math.max(1, data.sectionCount - 1) })} className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-all"><Minus className="w-6 h-6"/></button>
+                    <span className="flex-1 text-center text-3xl font-black text-gray-900">{data.sectionCount}</span>
+                    <button onClick={() => updateData({ sectionCount: data.sectionCount + 1 })} className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-all"><Plus className="w-6 h-6"/></button>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 p-3 bg-[#27272a] rounded-lg">
-                <p className="text-sm text-[#71717a]">예상 견적 범위</p>
-                <p className="text-xl font-bold text-[#22d3ee]">{estimatedPrice()}</p>
+              <div className="bg-indigo-600 rounded-2xl p-6 text-center shadow-xl shadow-indigo-100">
+                <p className="text-indigo-100 text-sm font-bold mb-1">작업 규모에 따른 예상 견적</p>
+                <p className="text-3xl font-black text-white">{estimatedPrice()}</p>
               </div>
             </div>
 
-            <div className="bg-[#10b981]/10 border border-[#10b981]/30 rounded-xl p-4">
-              <p className="text-sm text-[#6ee7b7] mb-1">💬 견적 안내 멘트</p>
-              <p className="text-[#e8e8ed]">"말씀하신 정도라면 평균적으로 <strong className="text-white">{estimatedPrice()}</strong> 정도 예요."</p>
-              <p className="text-xs text-[#71717a] mt-2">* 조금 틀려도 괜찮아요. 대략적인 범위를 안내하는 거예요!</p>
+            <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100">
+              <p className="text-emerald-900 font-black text-lg">"말씀하신 정도라면 평균적으로 <span className="text-emerald-600 underline decoration-2">{estimatedPrice()}</span> 내외로 제작 가능합니다!"</p>
             </div>
           </div>
         </section>
 
-        {/* ========== STEP 5: 예산 & 클로징 ========== */}
+        {/* ========== STEP 5: 예산 & 대응 ========== */}
         <section ref={sectionRefs.budget} id="budget" className="scroll-mt-8">
-          <div className="card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-[#22d3ee]/20 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-[#22d3ee]" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">예산 확인 & 반응 대응</h2>
-                <p className="text-sm text-[#71717a]">고객 반응에 따라 대응하세요</p>
-              </div>
-            </div>
+          <div className="card p-8">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+              <DollarSign className="w-7 h-7 text-indigo-600" /> 예산 파악 및 반응 대응
+            </h2>
             
-            <div className="bg-[#22d3ee]/10 border border-[#22d3ee]/30 rounded-xl p-4 mb-5">
-              <p className="text-sm text-[#67e8f9] mb-1">💬 예산 물어보기</p>
-              <p className="text-[#e8e8ed]">"혹시 생각하시는 예산 범위가 있으신가요? 웬만하면 맞춰드리고 싶어서요!"</p>
+            <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 mb-6">
+              <p className="text-indigo-900 font-black text-lg">"혹시 생각하시는 예산 범위가 있으신가요? 최대한 예산 내에서 최적의 구성을 맞춰드리고 싶어서요!"</p>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="grid grid-cols-3 gap-3 mb-6">
               {[
                 { id: "under100", label: "100만원 미만" },
                 { id: "100-200", label: "100~200만원" },
                 { id: "200-300", label: "200~300만원" },
                 { id: "300-500", label: "300~500만원" },
                 { id: "over500", label: "500만원 이상" },
-                { id: "undecided", label: "미정" },
+                { id: "undecided", label: "아직 미정" },
               ].map((opt) => {
                 const isSelected = data.budget === opt.id;
                 return (
                   <button
                     key={opt.id}
                     onClick={() => updateData({ budget: opt.id, customBudget: "" })}
-                    className={`p-2 rounded-xl border text-center transition-all
+                    className={`p-5 rounded-2xl border-2 transition-all font-black
                       ${isSelected 
-                        ? "bg-[#22d3ee]/10 border-[#22d3ee]" 
-                        : "bg-[#27272a]/30 border-[#2a2a32] hover:border-[#3a3a42]"
+                        ? "bg-indigo-50 border-indigo-600 text-indigo-900 shadow-sm" 
+                        : "bg-white border-gray-100 hover:border-gray-200 text-gray-500"
                       }`}
                   >
-                    <span className={`text-sm ${isSelected ? "text-white font-medium" : "text-[#a1a1aa]"}`}>
-                      {opt.label}
-                    </span>
+                    {opt.label}
                   </button>
                 );
               })}
@@ -721,46 +639,46 @@ export default function ChecklistPage() {
               type="text"
               value={data.customBudget}
               onChange={(e) => updateData({ customBudget: e.target.value, budget: "" })}
-              placeholder="기타 예산 직접 입력..."
-              className="input-field text-sm py-2 mb-5"
+              placeholder="별도의 예산을 직접 입력하세요..."
+              className="input-field h-14 font-black text-lg mb-8"
             />
 
-            {/* 상황별 대응 */}
-            <p className="text-sm text-[#71717a] mb-3">🎯 상황별 대응</p>
-            <div className="space-y-2">
+            <div className="space-y-3">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">🎯 상황별 대응 시나리오</p>
+              
               <SituationTip
                 id="too-expensive"
-                situation="😰 '비싸네요...' 반응이 안 좋을 때"
+                situation="😰 '비싸네요...' 반응이 좋지 않을 때"
                 icon={TrendingDown}
                 color="#ef4444"
                 response={[
-                  '"현재 제가 드릴 수 있는 담당자 할인이 20만원 있어요. 이 정도면 어떠세요?"',
-                  '"혹시 예산이 정해져 있으시면 말씀해주세요. 그 안에서 최대한 맞춰드릴게요!"',
-                  '"기능을 좀 줄이면 비용도 낮출 수 있어요. 꼭 필요한 것만 먼저 해볼까요?"'
+                  '"현재 제가 드릴 수 있는 담당자 특별 할인 20만원을 바로 적용해드릴 수 있어요!"',
+                  '"정해진 예산이 있으시면 말씀해주세요. 그 안에서 가장 효율적인 기능들로만 다시 구성해드릴게요."',
+                  '"기능을 단계별로 나눠서 먼저 꼭 필요한 것만 오픈하고 나중에 확장하는 방법도 있습니다."'
                 ]}
               />
               
               <SituationTip
                 id="discount"
-                situation="🎁 할인 카드 사용하기"
+                situation="🎁 할인 카드로 설득하기"
                 icon={Gift}
                 color="#10b981"
                 response={[
-                  '"지금 상담해주신 분들께 담당자 할인 20만원 적용해드리고 있어요!"',
-                  '"이번 달 프로모션으로 10% 할인 가능해요."',
-                  '"계약금 선결제 시 추가 할인 가능합니다!"'
+                  '"지금 상담해주신 분들께 담당자 권한으로 20만원 즉시 할인이 가능합니다."',
+                  '"이번 달 프로모션 기간이라 10% 추가 할인을 받으실 수 있는 좋은 기회예요."',
+                  '"계약금 선결제 시 추가 혜택을 드릴 수 있습니다!"'
                 ]}
               />
 
               <SituationTip
                 id="think-about"
-                situation="🤔 '생각해볼게요' 할 때"
+                situation="🤔 '좀 더 생각해볼게요' 라고 할 때"
                 icon={Clock}
                 color="#f59e0b"
                 response={[
-                  '"네, 천천히 생각해보세요! 궁금한 거 있으시면 편하게 연락주세요."',
-                  '"혹시 카톡이나 메일로 견적서 보내드릴까요? 참고하시기 편하실 거예요."',
-                  '"다른 업체랑 비교해보셔도 좋아요. 저희가 제일 합리적일 거예요 😊"'
+                  '"네, 큰 결정이시니 충분히 고민해보세요! 궁금한 게 생기면 언제든 편하게 연락 주시고요."',
+                  '"참고하실 수 있도록 오늘 상담 내용을 정리해서 견적서와 함께 메일로 보내드릴까요?"',
+                  '"다른 업체와 비교해보셔도 좋습니다. 저희가 품질과 사후관리 면에서 가장 자신 있거든요 😊"'
                 ]}
               />
             </div>
@@ -769,189 +687,123 @@ export default function ChecklistPage() {
 
         {/* ========== STEP 6: 마무리 ========== */}
         <section ref={sectionRefs.closing} id="closing" className="scroll-mt-8">
-          <div className="card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-3xl">✅</span>
-              <div>
-                <h2 className="text-xl font-bold">상담 마무리</h2>
-                <p className="text-sm text-[#71717a]">다음 단계 안내</p>
-              </div>
-            </div>
+          <div className="card p-8">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+              <span className="text-3xl">✅</span> 상담 마무리 및 후속 조치
+            </h2>
             
-            <div className="bg-gradient-to-r from-[#6366f1]/10 to-[#22d3ee]/10 border border-[#6366f1]/30 rounded-xl p-4 mb-5">
-              <p className="text-sm text-[#a5b4fc] mb-1">💬 마무리 멘트</p>
-              <p className="text-[#e8e8ed]">"네, 오늘 상담 감사합니다! 말씀하신 내용 정리해서 견적서 보내드릴게요. 😊"</p>
+            <div className="bg-indigo-600 p-6 rounded-[24px] shadow-xl shadow-indigo-100 mb-8">
+              <p className="text-indigo-100 font-black text-lg">"오늘 상담 감사합니다! 말씀하신 내용 꼼꼼히 정리해서 24시간 내에 견적서 보내드릴게요. 😊"</p>
             </div>
 
-            <div className="bg-[#1a1a1f] rounded-xl p-4 mb-4">
-              <p className="text-sm font-medium text-white mb-3">📋 상담 후 할 일</p>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 text-sm text-[#a1a1aa]">
-                  <div className="w-6 h-6 rounded-full bg-[#6366f1]/20 flex items-center justify-center text-xs text-[#6366f1]">1</div>
-                  <span>상담 내용 복사해서 노션/슬랙에 기록</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-[#a1a1aa]">
-                  <div className="w-6 h-6 rounded-full bg-[#6366f1]/20 flex items-center justify-center text-xs text-[#6366f1]">2</div>
-                  <span>견적 계산기로 정확한 견적 산출</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-[#a1a1aa]">
-                  <div className="w-6 h-6 rounded-full bg-[#6366f1]/20 flex items-center justify-center text-xs text-[#6366f1]">3</div>
-                  <span>24시간 내 견적서 발송</span>
-                </div>
+            <div className="bg-gray-50 rounded-[24px] p-8 border border-gray-100 mb-8">
+              <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Next Steps for You</h3>
+              <div className="space-y-4">
+                {[
+                  "상담 내용을 복사해서 내부 채널(슬랙/노션)에 즉시 기록",
+                  "견적 계산기를 사용하여 더 세밀한 최종 견적 산출",
+                  "상담 종료 후 24시간 내에 공식 견적서 발송"
+                ].map((task, i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100">
+                    <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-sm font-black text-indigo-600">{i + 1}</div>
+                    <span className="text-gray-700 font-black">{task}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* 추가 메모 */}
             <div>
-              <p className="text-sm text-[#71717a] mb-2">📝 추가 메모</p>
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">📝 추가 상담 메모</p>
               <textarea
                 value={data.additionalNotes}
                 onChange={(e) => updateData({ additionalNotes: e.target.value })}
-                placeholder="기타 메모할 내용..."
-                className="input-field text-sm min-h-[80px] resize-none"
+                placeholder="고객의 특이사항이나 기억해야 할 내용을 적어주세요..."
+                className="input-field min-h-[120px] font-bold text-base"
               />
             </div>
           </div>
         </section>
       </div>
 
-      {/* 오른쪽: 고정된 메모장 */}
+      {/* 오른쪽: 고정된 네비게이션 및 진단 결과 */}
       <div className="w-80 flex-shrink-0">
-        <div className="sticky top-8 space-y-4">
-          {/* 네비게이션 */}
-          <div className="card p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-[#71717a]">진행 상황</span>
-              <button onClick={resetAll} className="p-1 rounded hover:bg-[#27272a]" title="초기화">
-                <RotateCcw className="w-4 h-4 text-[#71717a]" />
+        <div className="sticky top-8 space-y-6">
+          {/* 단계 네비게이션 */}
+          <div className="bg-white rounded-[24px] p-2 border border-gray-100 shadow-sm">
+            <div className="p-4 border-b border-gray-50 flex items-center justify-between mb-2">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Consultation Flow</span>
+              <button onClick={resetAll} className="p-2 hover:bg-rose-50 text-gray-300 hover:text-rose-600 rounded-xl transition-all" title="초기화">
+                <RotateCcw className="w-5 h-5"/>
               </button>
             </div>
             <div className="space-y-1">
               {[
-                { key: "start", label: "첫 응대", icon: "📞" },
-                { key: "sitetype", label: "사이트 유형", icon: "🎯" },
-                { key: "plan", label: "기획 상태", icon: "📝" },
-                { key: "content", label: "콘텐츠", icon: "🎨" },
-                { key: "section", label: "페이지/섹션", icon: "📏" },
-                { key: "budget", label: "예산/대응", icon: "💰" },
-                { key: "closing", label: "마무리", icon: "✅" },
+                { key: "start", label: "첫 인사 및 응대", icon: "📞" },
+                { key: "sitetype", label: "사이트 유형 파악", icon: "🎯" },
+                { key: "plan", label: "기획 상태 확인", icon: "📝" },
+                { key: "content", label: "콘텐츠 준비 상태", icon: "🎨" },
+                { key: "section", label: "규모 및 견적 설명", icon: "📏" },
+                { key: "budget", label: "예산 및 반응 대응", icon: "💰" },
+                { key: "closing", label: "상담 마무리", icon: "✅" },
               ].map((item) => (
                 <button
                   key={item.key}
                   onClick={() => scrollToSection(item.key)}
-                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all
+                  className={`w-full text-left px-5 py-3.5 rounded-2xl font-black text-sm transition-all
                     ${activeSection === item.key 
-                      ? "bg-[#6366f1]/20 text-white" 
-                      : "text-[#71717a] hover:bg-[#27272a]"
+                      ? "bg-indigo-50 text-indigo-600" 
+                      : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
                     }`}
                 >
-                  <span className="text-sm">{item.icon}</span>
-                  <span className="text-sm flex-1">{item.label}</span>
+                  <span className="mr-3">{item.icon}</span>
+                  {item.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* 메모장 */}
-          <div className="card p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <StickyNote className="w-5 h-5 text-[#fbbf24]" />
-              <span className="font-semibold">상담 메모</span>
+          {/* 진단 결과 카드 */}
+          <div className="card p-8 bg-gray-900 text-white shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-6 opacity-10">
+              <StickyNote className="w-20 h-20" />
             </div>
+            <h3 className="font-black text-xl mb-8 flex items-center gap-2">
+              <div className="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
+              실시간 진단
+            </h3>
             
-            {/* 선택된 항목 요약 */}
-            <div className="space-y-2 mb-4 max-h-40 overflow-y-auto text-sm">
-              {(data.siteType || data.customSiteType) && (
-                <div className="flex items-start gap-2">
-                  <span className="text-[#10b981]">🎯</span>
-                  <span className="text-[#a1a1aa]">{data.customSiteType || 
-                    (data.siteType === "company" ? "회사/브랜드 소개" :
-                     data.siteType === "shopping" ? "쇼핑몰" :
-                     data.siteType === "reservation" ? "예약 사이트" :
-                     data.siteType === "portfolio" ? "포트폴리오" :
-                     data.siteType === "landing" ? "랜딩페이지" :
-                     data.siteType === "blog" ? "블로그/매거진" : data.siteType)
-                  }</span>
+            <div className="space-y-6 mb-10">
+              <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
+                <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">Estimated Quote</p>
+                <p className="text-3xl font-black text-indigo-400 tracking-tighter">{estimatedPrice()}</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-black">규모</span>
+                  <span className="text-white font-black">{data.pageCount}P / {data.sectionCount}S</span>
                 </div>
-              )}
-              {data.hasPlan && (
-                <div className="flex items-start gap-2">
-                  <span className="text-[#f59e0b]">📝</span>
-                  <span className="text-[#a1a1aa]">
-                    {data.hasPlan === "yes" ? "기획 완료" : data.hasPlan === "partial" ? "부분 기획" : "기획 필요"}
-                  </span>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-black">유형</span>
+                  <span className="text-white font-black truncate max-w-[120px]">{data.customSiteType || data.siteType || "미정"}</span>
                 </div>
-              )}
-              {data.menuStructure && (
-                <div className="flex items-start gap-2">
-                  <span className="text-[#71717a]">📋</span>
-                  <span className="text-[#71717a] text-xs line-clamp-2">{data.menuStructure}</span>
-                </div>
-              )}
-              {data.hasContent && (
-                <div className="flex items-start gap-2">
-                  <span className="text-[#ec4899]">🎨</span>
-                  <span className="text-[#a1a1aa]">
-                    {data.hasContent === "yes" ? "콘텐츠 있음" : data.hasContent === "partial" ? "일부 있음" : "콘텐츠 필요"}
-                  </span>
-                </div>
-              )}
-              {(data.pageCount !== 5 || data.sectionCount !== 15) && (
-                <div className="flex items-start gap-2">
-                  <span className="text-[#6366f1]">📏</span>
-                  <span className="text-[#a1a1aa]">{data.pageCount}페이지, {data.sectionCount}섹션</span>
-                </div>
-              )}
-              {(data.budget || data.customBudget) && (
-                <div className="flex items-start gap-2">
-                  <span className="text-[#22d3ee]">💰</span>
-                  <span className="text-[#a1a1aa]">{data.customBudget || 
-                    (data.budget === "under100" ? "100만원 미만" :
-                     data.budget === "100-200" ? "100~200만원" :
-                     data.budget === "200-300" ? "200~300만원" :
-                     data.budget === "300-500" ? "300~500만원" :
-                     data.budget === "over500" ? "500만원 이상" :
-                     data.budget === "undecided" ? "미정" : data.budget)
-                  }</span>
-                </div>
-              )}
+              </div>
             </div>
 
-            {/* 예상 견적 */}
-            <div className="bg-gradient-to-r from-[#6366f1]/20 to-[#22d3ee]/20 rounded-lg p-3 mb-4">
-              <p className="text-xs text-[#71717a]">예상 견적</p>
-              <p className="text-lg font-bold text-white">{estimatedPrice()}</p>
-            </div>
-
-            {/* 액션 버튼 */}
-            <div className="flex gap-2">
-              <button
-                onClick={copyToClipboard}
-                className="btn-primary flex-1 flex items-center justify-center gap-2 text-sm py-2"
+            <div className="grid grid-cols-1 gap-3">
+              <button 
+                onClick={copyToClipboard} 
+                className="w-full h-14 bg-white text-gray-900 rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-indigo-50 transition-all shadow-lg"
               >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? "복사됨!" : "복사"}
+                {copied ? <Check className="w-5 h-5 text-emerald-600" /> : <Copy className="w-5 h-5" />} 
+                {copied ? "Copied!" : "상담 내용 복사"}
               </button>
-              <button
+              <button 
                 onClick={() => window.open('/calculator', '_blank')}
-                className="btn-secondary px-3"
-                title="견적 계산기"
+                className="w-full h-14 bg-gray-800 text-gray-400 rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-gray-700 hover:text-white transition-all border border-white/5"
               >
-                <Zap className="w-4 h-4" />
+                <Zap className="w-5 h-5 text-indigo-400" /> 상세 계산기 열기
               </button>
-            </div>
-          </div>
-
-          {/* 빠른 링크 */}
-          <div className="card p-3">
-            <p className="text-xs text-[#71717a] mb-2">빠른 이동</p>
-            <div className="flex gap-2">
-              <a href="/calculator" className="flex-1 text-center py-2 px-3 rounded-lg bg-[#27272a] hover:bg-[#3a3a42] text-xs text-[#a1a1aa]">
-                견적 계산기
-              </a>
-              <a href="/faq" className="flex-1 text-center py-2 px-3 rounded-lg bg-[#27272a] hover:bg-[#3a3a42] text-xs text-[#a1a1aa]">
-                FAQ
-              </a>
             </div>
           </div>
         </div>

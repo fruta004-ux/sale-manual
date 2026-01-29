@@ -17,7 +17,7 @@ export default function MainLayout({
       <body className="antialiased">
         <div className="flex min-h-screen gradient-mesh">
           <Sidebar />
-          <main className="flex-1 ml-72 p-8">
+          <main className="flex-1 ml-[30px] p-6">
             {children}
           </main>
         </div>
