@@ -192,8 +192,8 @@ export default function FlowPage() {
         <div className="lg:col-span-2 space-y-8">
           {/* Overview */}
           <div className="card p-10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-5">
-               <Icon className="w-40 h-40" style={{ color: currentStep.color }} />
+            <div className="absolute top-0 right-0 p-8 opacity-5" style={{ color: currentStep.color }}>
+               <Icon className="w-40 h-40" />
             </div>
             <div className="flex flex-col md:flex-row md:items-center gap-6 mb-8">
               <div
