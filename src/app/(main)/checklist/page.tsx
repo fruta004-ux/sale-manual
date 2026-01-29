@@ -26,7 +26,9 @@ import {
   Gift,
   PlusCircle,
   Minus,
-  Plus
+  Plus,
+  CheckCircle2,
+  Search
 } from "lucide-react";
 
 // ============================================
