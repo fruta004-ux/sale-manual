@@ -28,14 +28,20 @@ import {
   Minus,
   Plus,
   CheckCircle2,
-  Search
+  Search,
+  Globe,
+  Sparkles,
+  Code2,
+  XCircle
 } from "lucide-react";
+import { platformInfo, PlatformType } from "@/lib/supabase";
 
 // ============================================
 // 데이터 타입
 // ============================================
 
 interface StepData {
+  platform: PlatformType;
   siteType: string;
   customSiteType: string;
   hasPlan: string;
@@ -50,6 +56,7 @@ interface StepData {
 }
 
 const initialData: StepData = {
+  platform: "",
   siteType: "",
   customSiteType: "",
   hasPlan: "",
@@ -100,6 +107,7 @@ export default function ChecklistPage() {
   
   const sectionRefs = {
     start: useRef<HTMLDivElement>(null),
+    platform: useRef<HTMLDivElement>(null),
     sitetype: useRef<HTMLDivElement>(null),
     plan: useRef<HTMLDivElement>(null),
     content: useRef<HTMLDivElement>(null),
@@ -150,8 +158,19 @@ export default function ChecklistPage() {
     setExpandedTips(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // 예상 견적 계산
+  // 예상 견적 계산 (플랫폼별)
   const estimatedPrice = () => {
+    // v0 전용 계산: 페이지당 10만원
+    if (data.platform === 'v0') {
+      const price = data.pageCount * 10;
+      return `약 ${price}만원`;
+    }
+    
+    // 커스텀 개발: AI 분석 필요
+    if (data.platform === 'custom') {
+      return "AI 분석 필요";
+    }
+    
     const pageScore = data.pageCount;
     const sectionScore = Math.ceil(data.sectionCount / 4);
     const total = Math.max(pageScore, sectionScore);
@@ -329,6 +348,109 @@ export default function ChecklistPage() {
                 ]}
               />
             </div>
+          </div>
+        </section>
+
+        {/* ========== STEP 0.5: 플랫폼 선택 ========== */}
+        <section ref={sectionRefs.platform} id="platform" className="scroll-mt-8">
+          <div className="card p-8">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+              <Layers className="w-7 h-7 text-indigo-600" /> 제작 플랫폼 선택
+            </h2>
+
+            {/* 플랫폼 선택 가이드 */}
+            <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 mb-6">
+              <p className="text-xs font-black text-amber-600 uppercase tracking-widest mb-2">플랫폼 선택 가이드</p>
+              <ul className="text-sm font-bold text-amber-800/70 space-y-1">
+                <li>• <strong className="text-amber-900">일반 소개 사이트</strong> → 아임웹 (빠르고 관리 쉬움)</li>
+                <li>• <strong className="text-amber-900">쇼핑몰/굿즈샵</strong> → 카페24 (결제/배송 기본 내장)</li>
+                <li>• <strong className="text-amber-900">빠른 시안/저예산 소개</strong> → v0 (페이지당 10만원, 소개형만)</li>
+                <li>• <strong className="text-amber-900">복잡한 시스템</strong> → 독립형 커스텀 개발</li>
+              </ul>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {/* 아임웹 */}
+              <button
+                onClick={() => updateData({ platform: 'aimweb' })}
+                className={`p-5 rounded-2xl border-2 text-left transition-all
+                  ${data.platform === 'aimweb' 
+                    ? "bg-indigo-50 border-indigo-600 shadow-md shadow-indigo-100" 
+                    : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <Globe className={`w-6 h-6 ${data.platform === 'aimweb' ? "text-indigo-600" : "text-gray-400"}`} />
+                  <span className={`text-lg font-black ${data.platform === 'aimweb' ? "text-indigo-900" : "text-gray-600"}`}>
+                    아임웹
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500">브랜드 소개, 랜딩, 쇼핑몰</p>
+                <p className="text-xs text-indigo-600 font-bold mt-1">100~300만원 · 1~3주</p>
+              </button>
+
+              {/* 카페24 */}
+              <button
+                onClick={() => updateData({ platform: 'cafe24' })}
+                className={`p-5 rounded-2xl border-2 text-left transition-all
+                  ${data.platform === 'cafe24' 
+                    ? "bg-orange-50 border-orange-500 shadow-md shadow-orange-100" 
+                    : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <ShoppingCart className={`w-6 h-6 ${data.platform === 'cafe24' ? "text-orange-600" : "text-gray-400"}`} />
+                  <span className={`text-lg font-black ${data.platform === 'cafe24' ? "text-orange-900" : "text-gray-600"}`}>
+                    카페24
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500">쇼핑몰, 유튜버 굿즈샵</p>
+                <p className="text-xs text-orange-600 font-bold mt-1">150~500만원 · 2~4주</p>
+              </button>
+
+              {/* v0 */}
+              <button
+                onClick={() => updateData({ platform: 'v0' })}
+                className={`p-5 rounded-2xl border-2 text-left transition-all
+                  ${data.platform === 'v0' 
+                    ? "bg-violet-50 border-violet-500 shadow-md shadow-violet-100" 
+                    : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <Sparkles className={`w-6 h-6 ${data.platform === 'v0' ? "text-violet-600" : "text-gray-400"}`} />
+                  <span className={`text-lg font-black ${data.platform === 'v0' ? "text-violet-900" : "text-gray-600"}`}>
+                    v0
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500">빠른 시안, 소개형 전용</p>
+                <p className="text-xs text-violet-600 font-bold mt-1">페이지당 10만원 · 1~2주</p>
+              </button>
+
+              {/* 독립형 */}
+              <button
+                onClick={() => updateData({ platform: 'custom' })}
+                className={`p-5 rounded-2xl border-2 text-left transition-all
+                  ${data.platform === 'custom' 
+                    ? "bg-emerald-50 border-emerald-500 shadow-md shadow-emerald-100" 
+                    : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <Code2 className={`w-6 h-6 ${data.platform === 'custom' ? "text-emerald-600" : "text-gray-400"}`} />
+                  <span className={`text-lg font-black ${data.platform === 'custom' ? "text-emerald-900" : "text-gray-600"}`}>
+                    독립형 (커스텀)
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500">복잡한 시스템, 회원권한</p>
+                <p className="text-xs text-emerald-600 font-bold mt-1">🤖 AI 분석 후 산출 · 4~12주+</p>
+              </button>
+            </div>
+
+            {/* 선택된 플랫폼 상세 가이드 */}
+            {data.platform && platformInfo[data.platform] && (
+              <PlatformDetailGuide platform={data.platform} />
+            )}
           </div>
         </section>
 
@@ -741,6 +863,7 @@ export default function ChecklistPage() {
             <div className="space-y-1">
               {[
                 { key: "start", label: "첫 인사 및 응대", icon: "📞" },
+                { key: "platform", label: "플랫폼 선택", icon: "🔧" },
                 { key: "sitetype", label: "사이트 유형 파악", icon: "🎯" },
                 { key: "plan", label: "기획 상태 확인", icon: "📝" },
                 { key: "content", label: "콘텐츠 준비 상태", icon: "🎨" },
@@ -782,6 +905,12 @@ export default function ChecklistPage() {
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-black">플랫폼</span>
+                  <span className="text-white font-black">
+                    {data.platform ? platformInfo[data.platform]?.name || '미정' : '미정'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
                   <span className="text-gray-500 font-black">규모</span>
                   <span className="text-white font-black">{data.pageCount}P / {data.sectionCount}S</span>
                 </div>
@@ -810,6 +939,103 @@ export default function ChecklistPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ============================================
+// 플랫폼 상세 가이드 컴포넌트
+// ============================================
+
+function PlatformDetailGuide({ platform }: { platform: Exclude<PlatformType, ''> }) {
+  const info = platformInfo[platform];
+  const [isExpanded, setIsExpanded] = useState(true);
+  
+  const colorMap: Record<string, { bg: string; border: string; text: string; accent: string }> = {
+    aimweb: { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-900', accent: 'text-indigo-600' },
+    cafe24: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-900', accent: 'text-orange-600' },
+    v0: { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-900', accent: 'text-violet-600' },
+    custom: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-900', accent: 'text-emerald-600' },
+  };
+  
+  const colors = colorMap[platform];
+  
+  return (
+    <div className={`${colors.bg} rounded-2xl border ${colors.border} overflow-hidden`}>
+      <button 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full p-5 flex items-center justify-between text-left"
+      >
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className={`w-6 h-6 ${colors.accent}`} />
+          <span className={`font-black text-lg ${colors.text}`}>{info.name} 선택됨</span>
+          <span className={`text-sm font-bold ${colors.accent}`}>{info.priceRange}</span>
+        </div>
+        <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+      </button>
+      
+      {isExpanded && (
+        <div className="px-5 pb-5 space-y-4">
+          {/* 세일즈 팁 */}
+          <div className="bg-white rounded-xl p-4 border border-gray-100">
+            <h4 className="font-black text-gray-900 mb-2 flex items-center gap-2 text-sm">
+              <Lightbulb className="w-4 h-4 text-amber-500" />
+              세일즈 팁
+            </h4>
+            <ul className="space-y-2">
+              {info.tips.map((tip, i) => (
+                <li key={i} className="text-sm text-gray-700 font-medium bg-amber-50 p-3 rounded-lg border-l-4 border-amber-400">
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          {/* 주의사항 (v0, 카페24 특별 강조) */}
+          {info.warnings.length > 0 && (
+            <div className="bg-rose-50 rounded-xl p-4 border border-rose-200">
+              <h4 className="font-black text-rose-800 mb-2 flex items-center gap-2 text-sm">
+                <AlertTriangle className="w-4 h-4" />
+                반드시 안내할 주의사항
+              </h4>
+              <ul className="space-y-1.5">
+                {info.warnings.map((warning, i) => (
+                  <li key={i} className="text-sm text-rose-800 font-medium flex items-start gap-2">
+                    <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-rose-500" />
+                    {warning}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {/* 추천/비추천 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white rounded-xl p-4 border border-gray-100">
+              <h4 className="font-black text-emerald-700 mb-2 text-xs uppercase tracking-wider">✓ 추천</h4>
+              <ul className="space-y-1">
+                {info.recommendFor.slice(0, 4).map((item, i) => (
+                  <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                    <span className="text-emerald-500 mt-0.5">•</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white rounded-xl p-4 border border-gray-100">
+              <h4 className="font-black text-rose-700 mb-2 text-xs uppercase tracking-wider">✗ 비추천</h4>
+              <ul className="space-y-1">
+                {info.notRecommendFor.slice(0, 4).map((item, i) => (
+                  <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                    <span className="text-rose-500 mt-0.5">•</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

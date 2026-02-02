@@ -41,7 +41,7 @@ import {
   Settings,
   Search
 } from "lucide-react";
-import { getSession, updateSession, SessionData, initialSessionData } from "@/lib/supabase";
+import { getSession, updateSession, SessionData, initialSessionData, platformInfo, PlatformType } from "@/lib/supabase";
 
 // ============================================
 // 섹션 샘플 데이터
@@ -165,8 +165,20 @@ export default function AdminPage() {
     }
   };
 
-  // 예상 견적 계산
+  // 예상 견적 계산 (플랫폼별)
   const estimatedPrice = () => {
+    // v0 전용 계산: 페이지당 10만원
+    if (data.platform === 'v0') {
+      const price = data.pageCount * 10;
+      return `약 ${price}만원`;
+    }
+    
+    // 커스텀 개발: AI 분석 필요
+    if (data.platform === 'custom') {
+      return "AI 분석 필요";
+    }
+    
+    // 기본 계산 로직 (아임웹, 카페24)
     const sectionScore = Math.ceil(data.sectionCount / 4);
     const workScore = Math.max(data.pageCount, sectionScore);
     
@@ -243,6 +255,95 @@ export default function AdminPage() {
     await navigator.clipboard.writeText(generateSummary());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // 커스텀 개발 AI 견적 요청 프롬프트 생성
+  const generateCustomDevPrompt = () => {
+    let prompt = `당신은 웹/앱 개발 프로젝트의 견적을 산출하는 전문가입니다.
+아래 고객 상담 내용을 바탕으로 개발 견적을 산출해주세요.
+
+## 견적 산출 시 고려사항
+- 한국 기준 개발 시장 단가 적용
+- 프론트엔드, 백엔드, 디자인 공수 분리
+- 기능별 난이도와 예상 개발 시간 명시
+- 최소/최대 견적 범위로 제시
+- 유지보수 비용 별도 안내
+
+## 고객 상담 내용
+`;
+
+    if (data.siteType || data.customSiteType) {
+      const typeLabel = data.customSiteType || 
+        (data.siteType === "company" ? "회사/브랜드 소개" :
+         data.siteType === "shopping" ? "쇼핑몰" :
+         data.siteType === "reservation" ? "예약 사이트" :
+         data.siteType === "portfolio" ? "포트폴리오" :
+         data.siteType === "landing" ? "랜딩페이지" :
+         data.siteType === "blog" ? "블로그/커뮤니티" : data.siteType);
+      prompt += `\n### 사이트 유형\n${typeLabel}\n`;
+    }
+
+    if (data.features && data.features.length > 0) {
+      const featureLabels: Record<string, string> = {
+        member: "회원가입/로그인",
+        payment: "결제 시스템",
+        reservation: "실시간 예약",
+        board: "커스텀 게시판",
+        multilang: "다국어 지원",
+        admin: "고급 관리자 기능",
+        search: "정밀 검색 기능",
+        api: "외부 API 연동",
+      };
+      prompt += `\n### 필요 기능\n`;
+      data.features.forEach(f => {
+        prompt += `- ${featureLabels[f] || f}\n`;
+      });
+      if (data.customFeature) {
+        prompt += `- ${data.customFeature}\n`;
+      }
+    }
+
+    if (data.referenceUrls && data.referenceUrls.filter(u => u).length > 0) {
+      prompt += `\n### 참고 사이트\n`;
+      data.referenceUrls.filter(u => u).forEach(url => {
+        prompt += `- ${url}\n`;
+      });
+    }
+
+    if (data.budget || data.customBudget) {
+      const budgetLabel = data.customBudget || 
+        (data.budget === "under100" ? "100만원 미만" :
+         data.budget === "100-200" ? "100~200만원" :
+         data.budget === "200-300" ? "200~300만원" :
+         data.budget === "300-500" ? "300~500만원" :
+         data.budget === "over500" ? "500만원 이상" : "미정");
+      prompt += `\n### 고객 예산 범위\n${budgetLabel}\n`;
+    }
+
+    if (data.deadline) {
+      prompt += `\n### 희망 완료일\n${data.deadline}\n`;
+    }
+
+    if (data.customDevNote) {
+      prompt += `\n### 상세 요구사항\n${data.customDevNote}\n`;
+    }
+
+    prompt += `
+## 요청사항
+위 내용을 바탕으로 다음 형식으로 견적을 산출해주세요:
+
+1. **프로젝트 요약** (한 줄)
+2. **기능별 공수 분석** (표 형식)
+   - 기능명 | 난이도 | 예상 공수(일) | 비고
+3. **총 견적 범위**
+   - 최소: 000만원
+   - 최대: 000만원
+4. **개발 기간**: 약 0~0주
+5. **추가 비용 안내** (서버, 유지보수 등)
+6. **권장사항 및 주의사항**
+`;
+
+    return prompt;
   };
 
   // 상황별 대응 팁 컴포넌트
@@ -351,6 +452,11 @@ export default function AdminPage() {
             [실시간 동기화]를 통해 고객 화면에 즉시 반영됩니다.
           </p>
         </div>
+
+        {/* 플랫폼 가이드 배너 */}
+        {data.platform && platformInfo[data.platform as Exclude<PlatformType, ''>] && (
+          <PlatformGuide platform={data.platform as Exclude<PlatformType, ''>} />
+        )}
 
         {/* 핵심 원칙 배너 */}
         <div className="bg-amber-50 rounded-2xl p-6 border border-amber-200 flex items-start gap-4">
@@ -1063,6 +1169,134 @@ export default function AdminPage() {
             />
           </div>
         </section>
+
+        {/* ========== 커스텀 개발 전용 섹션 ========== */}
+        {data.platform === 'custom' && (
+          <section ref={sectionRefs.summary} id="summary" className="scroll-mt-8">
+            <div className="card p-8 border-2 border-emerald-200 bg-emerald-50/30">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                  <FileText className="w-7 h-7" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-gray-900">커스텀 개발 상담 정리</h2>
+                  <p className="text-gray-500 font-medium">AI 견적 분석을 위한 상세 내용을 작성해주세요.</p>
+                </div>
+              </div>
+
+              {/* 프로세스 안내 */}
+              <div className="bg-white rounded-2xl p-6 border border-emerald-100 mb-6">
+                <h4 className="font-black text-emerald-800 mb-4 flex items-center gap-2">
+                  <Lightbulb className="w-5 h-5 text-amber-500" />
+                  커스텀 개발 견적 프로세스
+                </h4>
+                <div className="space-y-3">
+                  {[
+                    { step: 1, text: "아래 메모장에 고객 요구사항을 상세히 작성" },
+                    { step: 2, text: "작성된 내용을 복사하여 Gemini/GPT에 견적 요청" },
+                    { step: 3, text: "AI 분석 결과를 바탕으로 1차 견적서 작성" },
+                    { step: 4, text: "고객에게 1차 견적 전달 및 협의" },
+                  ].map((item) => (
+                    <div key={item.step} className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl">
+                      <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-sm">
+                        {item.step}
+                      </div>
+                      <span className="text-sm font-bold text-gray-700">{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 질문 가이드 */}
+              <div className="bg-amber-50 rounded-2xl p-5 border border-amber-200 mb-6">
+                <h4 className="font-black text-amber-800 mb-3 text-sm">📋 고객에게 물어볼 항목</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm text-amber-900">
+                  <ul className="space-y-1.5">
+                    <li>• 어떤 서비스/사업인가요?</li>
+                    <li>• 회원가입/로그인이 필요한가요?</li>
+                    <li>• 회원 유형이 여러 개인가요? (일반/관리자 등)</li>
+                    <li>• 결제 기능이 필요한가요?</li>
+                    <li>• 예약/일정 관리가 필요한가요?</li>
+                  </ul>
+                  <ul className="space-y-1.5">
+                    <li>• 관리자 페이지에서 뭘 관리하고 싶으세요?</li>
+                    <li>• 외부 서비스 연동이 필요한가요? (카카오, 네이버 등)</li>
+                    <li>• 알림(이메일/문자/푸시)이 필요한가요?</li>
+                    <li>• 참고하는 사이트나 앱이 있나요?</li>
+                    <li>• 기획서나 화면 설계서가 있나요?</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* 상담 내용 메모장 */}
+              <div className="bg-white rounded-2xl p-6 border-2 border-emerald-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-black text-gray-900 flex items-center gap-2">
+                    <StickyNote className="w-5 h-5 text-emerald-600" />
+                    상담 내용 메모장
+                  </h4>
+                  <button
+                    onClick={async () => {
+                      const prompt = generateCustomDevPrompt();
+                      try {
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                          await navigator.clipboard.writeText(prompt);
+                        } else {
+                          const textArea = document.createElement('textarea');
+                          textArea.value = prompt;
+                          textArea.style.position = 'fixed';
+                          textArea.style.left = '-9999px';
+                          document.body.appendChild(textArea);
+                          textArea.select();
+                          document.execCommand('copy');
+                          document.body.removeChild(textArea);
+                        }
+                        alert('AI 견적 요청용 프롬프트가 복사되었습니다!\n\nGemini 또는 ChatGPT에 붙여넣기 하세요.');
+                      } catch (err) {
+                        console.error('복사 실패:', err);
+                      }
+                    }}
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all flex items-center gap-2"
+                  >
+                    <Copy className="w-4 h-4" />
+                    AI 견적 요청용 복사
+                  </button>
+                </div>
+                <textarea
+                  value={data.customDevNote}
+                  onChange={(e) => updateData({ customDevNote: e.target.value })}
+                  placeholder={`[프로젝트 개요]
+- 서비스/사업 유형: 
+- 주요 타겟 사용자: 
+
+[필요한 기능]
+- 회원 기능: (예: 일반회원, 관리자, 판매자 등)
+- 주요 기능 1: 
+- 주요 기능 2: 
+- 주요 기능 3: 
+
+[관리자 페이지]
+- 필요한 관리 기능: 
+
+[외부 연동]
+- 소셜 로그인: (카카오/네이버/구글 등)
+- 결제: (카드/계좌이체/간편결제 등)
+- 기타 연동: 
+
+[참고 사이트/앱]
+- 
+
+[기타 요구사항]
+- 
+
+[고객 예산 범위]
+- `}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-medium text-gray-700 min-h-[400px] focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-300 transition-all resize-none font-mono"
+                />
+              </div>
+            </div>
+          </section>
+        )}
       </div>
 
       {/* 오른쪽: 고정된 패널 */}
@@ -1111,6 +1345,7 @@ export default function AdminPage() {
                 { key: "reference", label: "참고 사이트", icon: "🌐" },
                 { key: "schedule", label: "제작 일정", icon: "📅" },
                 { key: "budget", label: "예산 범위", icon: "💰" },
+                ...(data.platform === 'custom' ? [{ key: "summary", label: "커스텀 상담 정리", icon: "🤖" }] : []),
               ].map((item) => (
                 <button
                   key={item.key}
@@ -1234,3 +1469,137 @@ const MemoInput = memo(function MemoInput({
     </div>
   );
 });
+
+// ============================================
+// 플랫폼 가이드 컴포넌트
+// ============================================
+
+function PlatformGuide({ platform }: { platform: Exclude<PlatformType, ''> }) {
+  const info = platformInfo[platform];
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const colorMap: Record<string, { bg: string; border: string; accent: string; text: string; badge: string }> = {
+    aimweb: { bg: 'bg-indigo-50', border: 'border-indigo-200', accent: 'bg-indigo-600', text: 'text-indigo-900', badge: 'bg-indigo-100 text-indigo-700' },
+    cafe24: { bg: 'bg-orange-50', border: 'border-orange-200', accent: 'bg-orange-500', text: 'text-orange-900', badge: 'bg-orange-100 text-orange-700' },
+    v0: { bg: 'bg-violet-50', border: 'border-violet-200', accent: 'bg-violet-600', text: 'text-violet-900', badge: 'bg-violet-100 text-violet-700' },
+    custom: { bg: 'bg-emerald-50', border: 'border-emerald-200', accent: 'bg-emerald-600', text: 'text-emerald-900', badge: 'bg-emerald-100 text-emerald-700' },
+  };
+  
+  const colors = colorMap[platform];
+  
+  return (
+    <div className={`${colors.bg} rounded-2xl border ${colors.border} overflow-hidden`}>
+      {/* 헤더 */}
+      <button 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full p-6 flex items-center justify-between text-left"
+      >
+        <div className="flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-xl ${colors.accent} flex items-center justify-center`}>
+            <span className="text-white font-black text-lg">
+              {platform === 'aimweb' ? '아' : platform === 'cafe24' ? 'C' : platform === 'v0' ? 'v0' : '⚙'}
+            </span>
+          </div>
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <h3 className={`text-xl font-black ${colors.text}`}>{info.name}</h3>
+              <span className={`text-xs px-2.5 py-1 rounded-lg font-bold ${colors.badge}`}>{info.priceRange}</span>
+              <span className="text-xs px-2.5 py-1 rounded-lg font-bold bg-gray-100 text-gray-600">{info.timeline}</span>
+            </div>
+            <p className="text-sm text-gray-600 font-medium">{info.description}</p>
+          </div>
+        </div>
+        <ChevronDown className={`w-6 h-6 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+      </button>
+      
+      {/* 확장 영역 */}
+      {isExpanded && (
+        <div className="px-6 pb-6 space-y-6">
+          {/* 세일즈 팁 */}
+          <div className="bg-white rounded-xl p-5 border border-gray-100">
+            <h4 className="font-black text-gray-900 mb-3 flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-amber-500" />
+              세일즈 팁
+            </h4>
+            <ul className="space-y-2">
+              {info.tips.map((tip, i) => (
+                <li key={i} className="text-sm text-gray-700 font-medium bg-amber-50 p-3 rounded-lg border-l-4 border-amber-400">
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            {/* 추천 상황 */}
+            <div className="bg-white rounded-xl p-5 border border-gray-100">
+              <h4 className="font-black text-emerald-700 mb-3 text-sm uppercase tracking-wider">✓ 이런 경우 추천</h4>
+              <ul className="space-y-2">
+                {info.recommendFor.slice(0, 5).map((item, i) => (
+                  <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
+                    <span className="text-emerald-500 mt-0.5">•</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            {/* 비추천 상황 */}
+            <div className="bg-white rounded-xl p-5 border border-gray-100">
+              <h4 className="font-black text-rose-700 mb-3 text-sm uppercase tracking-wider">✗ 이런 경우 비추천</h4>
+              <ul className="space-y-2">
+                {info.notRecommendFor.map((item, i) => (
+                  <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
+                    <span className="text-rose-500 mt-0.5">•</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          
+          {/* 주의사항 */}
+          {info.warnings.length > 0 && (
+            <div className="bg-rose-50 rounded-xl p-5 border border-rose-200">
+              <h4 className="font-black text-rose-800 mb-3 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                반드시 안내할 주의사항
+              </h4>
+              <ul className="space-y-2">
+                {info.warnings.map((warning, i) => (
+                  <li key={i} className="text-sm text-rose-800 font-medium">{warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {/* 장단점 */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl p-5 border border-gray-100">
+              <h4 className="font-black text-gray-900 mb-3 text-sm">장점</h4>
+              <ul className="space-y-1.5">
+                {info.pros.map((item, i) => (
+                  <li key={i} className="text-xs text-gray-500 flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-emerald-400"></span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white rounded-xl p-5 border border-gray-100">
+              <h4 className="font-black text-gray-900 mb-3 text-sm">단점</h4>
+              <ul className="space-y-1.5">
+                {info.cons.map((item, i) => (
+                  <li key={i} className="text-xs text-gray-500 flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-rose-400"></span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
