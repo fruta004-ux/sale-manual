@@ -419,7 +419,7 @@ export default function ChecklistV2Page() {
             <Clock className="w-10 h-10" />
           </div>
           <p className="text-gray-400 font-bold text-xl mb-4">표시할 상담 내역이 없습니다.</p>
-          <button onClick={handleCreate} className="text-indigo-600 font-black hover:underline">첫 상담을 생성해보세요 →</button>
+          <button onClick={openCreateModal} className="text-indigo-600 font-black hover:underline">첫 상담을 생성해보세요 →</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
